@@ -30,8 +30,12 @@ else
         <table class="table">
             <thead>
                 <tr>
-                    <th>Letter</th>
-                    <th>Occurrences</th>
+                    <th>
+                        Letter <button class="btn btn-primary" @onclick="@(() => SortTable("Letter"))">@SetButtonName("Letter")</button>
+                    </th>
+                    <th>
+                        Occurrences  <button class="btn btn-primary" @onclick="@(() => SortTable("NumberOfOccurrences"))">@SetButtonName("NumberOfOccurrences")</button>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -56,6 +60,9 @@ else
     private Timer timer;
     private ServerState state;
 
+    private bool isSortedAsc;
+    private string activeSortColumn;
+        
     protected override void OnInitialized()
     {
         state = dataProcessor.GeteServerState();
@@ -71,6 +78,40 @@ else
         Analyses = await dataProcessor.ProcessData();
     }
 
+    private void SortTable(string columnName)
+    {
+        if (columnName != activeSortColumn)
+        {
+            Analyses = Analyses.OrderBy(x => x.GetType().GetProperty(columnName).GetValue(x, null)).ToList();
+            isSortedAsc = true;
+            activeSortColumn = columnName;
+        }
+        else
+        {
+            if (isSortedAsc)
+            {
+                Analyses = Analyses.OrderByDescending(x => x.GetType().GetProperty(columnName).GetValue(x, null)).ToList();
+            }
+            else
+            {
+                Analyses = Analyses.OrderBy(x => x.GetType().GetProperty(columnName).GetValue(x, null)).ToList();
+            }
+            isSortedAsc = !isSortedAsc;
+        }
+    }
+
+    private string SetButtonName(string columnName)
+    {
+        string b = string.IsNullOrEmpty(activeSortColumn) ? (columnName != "Letter" ? "Occurences" : columnName)
+            : (columnName != "Letter" ? "Occurences" : columnName);
+        if (string.IsNullOrEmpty(activeSortColumn))
+            return "Sort by " + b;
+        else if (isSortedAsc)
+            return "Sort by " + b + " (Desc)";
+        else
+            return "Sort by " + b + " (Asc)";
+    }
+   
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
